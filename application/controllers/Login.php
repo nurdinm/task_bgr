@@ -28,6 +28,18 @@ class Login extends CI_Controller
 		];
 	}
 
+
+	public function rulesResetPassword()
+	{
+		return [
+			[
+				'field' => 'email',
+				'label'  => 'Email',
+				'rules'  => 'required'
+			]
+		];
+	}
+
 	public function index()
 	{
 		$this->load->view('login');
@@ -90,6 +102,33 @@ class Login extends CI_Controller
 
 		$this->flashmsg("Login Gagal, Akun tidak terdaftar", 'danger');
 		redirect('', 'refresh');
+	}
+
+	public function ResetPassword()
+	{
+		$mLogin = $this->M_login;
+		$validation = $this->form_validation;
+		$validation->set_rules($this->rulesResetPassword());
+		$output = "";
+		if ($validation->run()) {
+			$post = $this->input->post();
+			$data['email'] = $post['email'];
+
+			$result = $mLogin->checkData($data['email']);
+
+			if ($result) {
+				$output['generate_password'] = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`-=~!@#$%^&*()_+,./<>?;:[]{}\|'), 0, 10);
+				$datas['password'] = password_hash($output['generate_password'], PASSWORD_BCRYPT);
+				$mLogin->resetPassword($data['email'], $datas);
+				$this->flashmsg('Password Berhasil di reset', 'success');
+			} else {
+				$this->flashmsg('Gagal Mengubah Password, Data Yang Anda Masukkan Salah', 'danger');
+			}
+
+			// redirect('lupa-password','refresh');
+		}
+
+		$this->load->view('reset', $output);
 	}
 
 	public function checkPassword($pwd)
